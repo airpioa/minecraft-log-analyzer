@@ -175,14 +175,25 @@ export default function Home() {
         try {
             if (provider === "browser-native") {
                 // @ts-ignore
-                const capabilities = await (window.ai?.languageModel?.capabilities() || window.ai?.assistant?.capabilities());
-                if (capabilities && capabilities.available !== 'no') {
+                const aiApi = window.ai?.languageModel || window.ai?.assistant;
+                
+                if (!aiApi) {
+                    throw new Error("Chrome AI API not found. Ensure you are on Chrome 127+ and flags are enabled.");
+                }
+
+                const capabilities = await aiApi.capabilities();
+                const status = capabilities?.available;
+
+                if (status === 'readily') {
                     setAvailableModels(["Built-in Gemini Nano"]);
                     setModel("Built-in Gemini Nano");
                     notify("Browser-Native AI is ready!", "success");
+                } else if (status === 'after-download') {
+                    throw new Error("Gemini Nano is enabling... Chrome is downloading the model. Check status in chrome://components (Optimization Guide).");
                 } else {
-                    throw new Error("Browser-Native AI (Gemini Nano) is not enabled or supported. Check Chrome flags.");
+                    throw new Error("Browser-Native AI is supported but currently disabled or unavailable on this device.");
                 }
+                
                 setIsFetchingModels(false);
                 return;
             }
@@ -625,14 +636,14 @@ export default function Home() {
                                         <div className="p-4 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl space-y-2">
                                             <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
                                                 <Info size={12} />
-                                                How to Enable
+                                                Full Setup Guide
                                             </p>
-                                            <p className="text-[10px] text-slate-400 leading-relaxed">
-                                                1. Open <code className="text-indigo-300">chrome://flags</code><br />
-                                                2. Enable <code className="text-indigo-300">Enables optimization guide on device</code><br />
-                                                3. Enable <code className="text-indigo-300">Prompt API for Gemini Nano</code><br />
-                                                4. Relaunch Chrome.
-                                            </p>
+                                            <div className="text-[10px] text-slate-400 space-y-2 leading-relaxed">
+                                                <p>1. Open <code className="text-indigo-300">chrome://flags</code></p>
+                                                <p>2. Set <span className="text-slate-200 font-bold">Enables optimization guide on device</span> to <span className="text-emerald-400">Enabled BypassPerfRequirement</span></p>
+                                                <p>3. Set <span className="text-slate-200 font-bold">Prompt API for Gemini Nano</span> to <span className="text-emerald-400">Enabled</span></p>
+                                                <p>4. Relaunch Chrome and wait for the model to download in <code className="text-indigo-300">chrome://components</code> (Optimization Guide On Device Model).</p>
+                                            </div>
                                         </div>
                                     )}
 
