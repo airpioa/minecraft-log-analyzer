@@ -788,7 +788,7 @@ export default function Home() {
                                                     </button>
                                                 </div>
                                             </motion.div>
-                                        )}
+                                        ) : null}
                                     </AnimatePresence>
                                 </div>
 
