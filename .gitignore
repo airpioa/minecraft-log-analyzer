@@ -1,0 +1,10 @@
+# Python
+venv/
+__pycache__/
+*.py[cod]
+
+# Config (contains API key!)
+config.json
+
+# Logs saved to disk
+log_*.txt
