@@ -1,4 +1,4 @@
-# minecraft-log-analyzer/
+# minecraft-log-analyzer
 
 A modern, high-performance web application designed to diagnose Minecraft crash logs using AI. Built with Next.js and Tailwind CSS, it offers a seamless experience for both automated API-driven analysis and manual AI prompting.
 

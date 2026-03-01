@@ -598,7 +598,7 @@ export default function Home() {
                             </div>
                             <div className="text-center md:text-left">
                                 <h1 className="text-2xl font-black font-outfit tracking-tighter text-white uppercase">
-                                    minecraft-log-analyzer<span className="text-indigo-500">/</span>
+                                    minecraft-log-analyzer
                                 </h1>
                                 <p className="text-xs font-bold text-slate-500 uppercase tracking-[0.3em]">AI Crash Diagnostics</p>
                             </div>
