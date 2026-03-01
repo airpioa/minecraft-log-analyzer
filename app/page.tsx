@@ -28,9 +28,14 @@ import {
 import { getRawUrl, fetchLog } from "@/lib/logs";
 import { openSearchUrl, uploadToMclogs, exportToFile, SCANNER_PROMPT } from "@/lib/utilities";
 
-type Provider = "gemini" | "openai" | "anthropic" | "ollama" | "openai-compatible";
+type Provider = "gemini" | "openai" | "anthropic" | "ollama" | "openai-compatible" | "browser-native";
 type Mode = "url" | "manual" | "hub";
-type Notification = { id: string, message: string, type: 'error' | 'success' };
+type Notification = { 
+    id: string, 
+    message: string, 
+    type: 'error' | 'success',
+    action?: { label: string, fn: () => void }
+};
 
 const SYSTEM_PROMPT = `
 You are an expert Minecraft log analyzer. Please analyze the following log and:
@@ -111,6 +116,8 @@ export default function Home() {
     const [isFetchingModels, setIsFetchingModels] = useState(false);
     const [isManualModel, setIsManualModel] = useState(false);
     const [isCloudModalOpen, setIsCloudModalOpen] = useState(false);
+    const [useProxy, setUseProxy] = useState(false);
+    const [proxyUrl, setProxyUrl] = useState("https://corsproxy.io/?");
 
     const resultsEndRef = useRef<HTMLDivElement>(null);
     const pastedLogRef = useRef<HTMLTextAreaElement>(null);
@@ -119,7 +126,19 @@ export default function Home() {
         setMounted(true);
         const savedProvider = localStorage.getItem("mc_provider") as Provider;
         if (savedProvider) setProvider(savedProvider);
+
+        const savedUseProxy = localStorage.getItem("mc_use_proxy") === "true";
+        setUseProxy(savedUseProxy);
+        const savedProxyUrl = localStorage.getItem("mc_proxy_url");
+        if (savedProxyUrl) setProxyUrl(savedProxyUrl);
     }, []);
+
+    useEffect(() => {
+        if (mounted) {
+            localStorage.setItem("mc_use_proxy", useProxy.toString());
+            localStorage.setItem("mc_proxy_url", proxyUrl);
+        }
+    }, [useProxy, proxyUrl, mounted]);
 
     useEffect(() => {
         if (mounted && activeMode === 'url' && !urls.trim()) {
@@ -133,10 +152,26 @@ export default function Home() {
         
         setIsFetchingModels(true);
         try {
+            if (provider === "browser-native") {
+                // @ts-ignore
+                const capabilities = await (window.ai?.languageModel?.capabilities() || window.ai?.assistant?.capabilities());
+                if (capabilities && capabilities.available !== 'no') {
+                    setAvailableModels(["Built-in Gemini Nano"]);
+                    setModel("Built-in Gemini Nano");
+                    notify("Browser-Native AI is ready!", "success");
+                } else {
+                    throw new Error("Browser-Native AI (Gemini Nano) is not enabled or supported. Check Chrome flags.");
+                }
+                setIsFetchingModels(false);
+                return;
+            }
+
             // Direct client-side fetch for Ollama
             if (provider === "ollama") {
-                const targetUrl = baseUrl?.replace(/\/$/, "") || "http://localhost:11434";
-                const resp = await fetch(`${targetUrl}/api/tags`);
+                const targetUrl = (baseUrl?.replace(/\/$/, "") || "http://localhost:11434") + "/api/tags";
+                const finalUrl = useProxy ? `${proxyUrl}${encodeURIComponent(targetUrl)}` : targetUrl;
+                
+                const resp = await fetch(finalUrl);
                 const data = await resp.json();
                 const models = data.models?.map((m: any) => m.name) || [];
                 setAvailableModels(models);
@@ -150,11 +185,13 @@ export default function Home() {
 
             // Direct client-side for OpenAI
             if (provider === "openai" || (provider === "openai-compatible" && baseUrl)) {
-                const apiBaseUrl = provider === "openai" ? "https://api.openai.com/v1" : baseUrl?.replace(/\/$/, "");
+                const apiBaseUrl = (provider === "openai" ? "https://api.openai.com/v1" : baseUrl?.replace(/\/$/, "")) + "/models";
+                const finalUrl = useProxy ? `${proxyUrl}${encodeURIComponent(apiBaseUrl)}` : apiBaseUrl;
+                
                 const headers: any = { "Content-Type": "application/json" };
                 if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
 
-                const resp = await fetch(`${apiBaseUrl}/models`, { headers });
+                const resp = await fetch(finalUrl, { headers });
                 const data = await resp.json();
                 if (data.error) throw new Error(data.error.message || "API Error");
                 let models = data.data?.map((m: any) => m.id) || [];
@@ -170,7 +207,10 @@ export default function Home() {
 
             // Direct client-side for Gemini
             if (provider === "gemini" && apiKey) {
-                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+                const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+                const finalUrl = useProxy ? `${proxyUrl}${encodeURIComponent(targetUrl)}` : targetUrl;
+
+                const resp = await fetch(finalUrl);
                 const data = await resp.json();
                 if (data.error) throw new Error(data.error.message || "Gemini API error");
                 const models = data.models
@@ -199,17 +239,44 @@ export default function Home() {
                 return;
             }
         } catch (err: any) {
-            notify(err.message || "Failed to fetch models");
+            if (err instanceof TypeError) {
+                handleCorsError();
+            } else {
+                notify(err.message || "Failed to fetch models");
+            }
         } finally {
             setIsFetchingModels(false);
         }
     };
 
-    const callAiClient = async (content: string, customPrompt?: string, taskType?: 'analysis' | 'scan') => {
-        const systemPrompt = customPrompt || (taskType === 'scan' ? SCANNER_PROMPT : SYSTEM_PROMPT);
-        const fullPrompt = `${systemPrompt}\n\nLog:\n${content}`;
+    const handleCorsError = () => {
+        const id = Math.random().toString(36).substring(2, 9);
+        setNotifications(prev => [...prev, { 
+            id, 
+            message: "CORS/Network error detected. The browser blocked the request. Would you like to use a CORS Proxy?", 
+            type: 'error'
+        }]);
+    };
+const callAiClient = async (content: string, customPrompt?: string, taskType?: 'analysis' | 'scan') => {
+    const systemPrompt = customPrompt || (taskType === 'scan' ? SCANNER_PROMPT : SYSTEM_PROMPT);
+    const fullPrompt = `${systemPrompt}\n\nLog:\n${content}`;
+
+    try {
+        if (provider === "browser-native") {
+            // @ts-ignore
+            const aiApi = window.ai?.languageModel || window.ai?.assistant;
+            if (!aiApi) throw new Error("Browser AI API not found. Please use Chrome 127+ and enable Prompt API flags.");
+
+            const session = await aiApi.create({
+                systemPrompt: systemPrompt
+            });
+
+            const response = await session.prompt(content);
+            return response;
+        }
 
         if (provider === "ollama") {
+
             const targetUrl = baseUrl?.replace(/\/$/, "") || "http://localhost:11434";
             const resp = await fetch(`${targetUrl}/api/generate`, {
                 method: "POST",
@@ -307,6 +374,13 @@ export default function Home() {
         setTimeout(() => {
             fetchModels();
         }, 100);
+    }, [provider, mounted]);
+
+    useEffect(() => {
+        if (mounted && provider === 'browser-native') {
+            setApiKey("");
+            setBaseUrl("");
+        }
     }, [provider, mounted]);
 
     useEffect(() => {
@@ -504,9 +578,25 @@ export default function Home() {
                                             <option value="openai">OpenAI (Official)</option>
                                             <option value="anthropic">Anthropic Claude</option>
                                             <option value="ollama">Ollama (Local)</option>
-                                            <option value="openai-compatible">OpenAI Compatible (Groq, Together, etc)</option>
+                                            <option value="openai-compatible">OpenAI Compatible</option>
+                                            <option value="browser-native">Chrome (Built-in AI)</option>
                                         </select>
                                     </div>
+
+                                    {provider === 'browser-native' && (
+                                        <div className="p-4 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl space-y-2">
+                                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+                                                <Info size={12} />
+                                                How to Enable
+                                            </p>
+                                            <p className="text-[10px] text-slate-400 leading-relaxed">
+                                                1. Open <code className="text-indigo-300">chrome://flags</code><br/>
+                                                2. Enable <code className="text-indigo-300">Enables optimization guide on device</code><br/>
+                                                3. Enable <code className="text-indigo-300">Prompt API for Gemini Nano</code><br/>
+                                                4. Relaunch Chrome.
+                                            </p>
+                                        </div>
+                                    )}
 
                                     <div className="flex flex-col gap-4">
                                         {provider !== "ollama" && (
@@ -581,6 +671,41 @@ export default function Home() {
                                                     </div>
                                                 )}
                                             </div>
+                                        </div>
+
+                                        <div className="pt-4 border-t border-white/5 space-y-6">
+                                            <div className="flex flex-col gap-3">
+                                                <div className="flex items-center justify-between">
+                                                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Network & CORS</label>
+                                                    <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${useProxy ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+                                                        {useProxy ? 'PROXY ON' : 'DIRECT'}
+                                                    </div>
+                                                </div>
+                                                
+                                                <button 
+                                                    onClick={() => setUseProxy(!useProxy)}
+                                                    className={`w-full p-4 rounded-2xl border text-xs font-black transition-all flex items-center justify-center gap-3 ${useProxy 
+                                                        ? 'bg-emerald-600/10 border-emerald-500/20 text-emerald-400' 
+                                                        : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'}`}
+                                                >
+                                                    {useProxy ? <ShieldCheck size={16} /> : <Globe size={16} />}
+                                                    BYPASS CORS (VIA PROXY)
+                                                </button>
+                                            </div>
+
+                                            {useProxy && (
+                                                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-3">
+                                                    <label className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Proxy URL Prefix</label>
+                                                    <input
+                                                        type="text" value={proxyUrl} onChange={(e) => setProxyUrl(e.target.value)}
+                                                        placeholder="https://cors-anywhere.herokuapp.com/"
+                                                        className="w-full bg-slate-900 border border-white/10 rounded-xl p-3 text-[10px] outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-mono"
+                                                    />
+                                                    <p className="text-[9px] text-red-400/60 font-medium leading-relaxed bg-red-500/5 p-3 rounded-xl border border-red-500/10">
+                                                        ⚠️ Warning: Using a public proxy exposes your API Key and Log Content to the proxy provider. Use with caution.
+                                                    </p>
+                                                </motion.div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -1018,8 +1143,21 @@ export default function Home() {
                                 }`}
                         >
                             {n.type === 'error' ? <AlertCircle size={20} className="shrink-0" /> : <CheckCircle2 size={20} className="shrink-0" />}
-                            <p className="text-xs font-bold leading-relaxed flex-1">{n.message}</p>
-                            <button onClick={() => setNotifications(prev => prev.filter(nn => nn.id !== n.id))} className="p-2 hover:bg-white/5 rounded-xl transition-colors">
+                            <div className="flex-1 flex flex-col gap-2">
+                                <p className="text-xs font-bold leading-relaxed">{n.message}</p>
+                                {n.action && (
+                                    <button 
+                                        onClick={() => {
+                                            n.action?.fn();
+                                            setNotifications(prev => prev.filter(nn => nn.id !== n.id));
+                                        }}
+                                        className="w-fit px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-[10px] font-black uppercase tracking-tighter transition-all"
+                                    >
+                                        {n.action.label}
+                                    </button>
+                                )}
+                            </div>
+                            <button onClick={() => setNotifications(prev => prev.filter(nn => nn.id !== n.id))} className="p-2 hover:bg-white/5 rounded-xl transition-colors shrink-0">
                                 <X size={16} />
                             </button>
                         </motion.div>
