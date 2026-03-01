@@ -788,28 +788,6 @@ export default function Home() {
                                                     </button>
                                                 </div>
                                             </motion.div>
-                                        ) : (
-                                            <motion.div
-                                                key="manual" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                                                className="flex-1 flex flex-col gap-6"
-                                            >
-                                                <div className="flex flex-col gap-3">
-                                                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest px-2">Log URLs for Prompt</label>
-                                                    <textarea
-                                                        value={urls} onChange={(e) => setUrls(e.target.value)}
-                                                        placeholder="Enter URLs to analyze manually..."
-                                                        className="h-32 bg-black/40 border border-white/5 rounded-[2.5rem] p-8 text-slate-200 outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all font-mono text-xs leading-relaxed resize-none scrollbar-hide shrink-0"
-                                                    />
-                                                </div>
-                                                <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 border-2 border-dashed border-white/5 rounded-[2.5rem] p-10 bg-indigo-500/5">
-                                                    <div className="p-4 bg-indigo-500/10 rounded-full"><Info className="text-indigo-400" size={28} /></div>
-                                                    <p className="text-xs text-slate-400 leading-relaxed max-w-xs px-4 font-medium italic">"Generate a high-quality analysis prompt to use in your favorite AI window without needing API keys."</p>
-                                                    <button onClick={handleManualPrompt} className={`px-10 py-4 rounded-2xl font-black text-xs transition-all shadow-xl active:scale-95 group flex items-center gap-3 ${isPromptCopied ? 'bg-emerald-600 shadow-emerald-500/20' : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/20'}`}>
-                                                        {isPromptCopied ? <CheckCircle2 size={16} /> : <Copy size={16} className="text-indigo-200" />}
-                                                        {isPromptCopied ? 'COPIED!' : 'COPY PROMPT'}
-                                                    </button>
-                                                </div>
-                                            </motion.div>
                                         )}
                                     </AnimatePresence>
                                 </div>
