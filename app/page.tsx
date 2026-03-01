@@ -174,6 +174,9 @@ export default function Home() {
         setIsFetchingModels(true);
         try {
             if (provider === "browser-native") {
+                // Give browser a moment to inject AI API if just switched
+                await new Promise(r => setTimeout(r, 500));
+                
                 // @ts-ignore
                 const aiApi = window.ai?.languageModel || window.ai?.assistant;
                 
