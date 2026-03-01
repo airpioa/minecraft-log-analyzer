@@ -33,9 +33,9 @@ import Cookies from "js-cookie";
 
 type Provider = "gemini" | "openai" | "anthropic" | "web-llm" | "openai-compatible" | "browser-native";
 type Mode = "url" | "manual" | "hub";
-type Notification = { 
-    id: string, 
-    message: string, 
+type Notification = {
+    id: string,
+    message: string,
     type: 'error' | 'success',
     action?: { label: string, fn: () => void }
 };
@@ -48,7 +48,7 @@ You are an expert Minecraft log analyzer. Please analyze the following log and:
 4. If it's a version mismatch (e.g., Fabric vs Forge), explain the fix.
 Keep your response concise, helpful, and professional.
 
-This was made by an automated tool that uses AI: https://airpioa.github.io/minecraft-log-analyzer
+put This was made by an automated tool that uses AI: https://airpioa.github.io/minecraft-log-analyzer at the end
 `;
 
 const SELECTION_PROMPT = `
@@ -56,19 +56,19 @@ You are an expert Minecraft developer. Please explain the following snippet from
 Tell the user what it means, what it is doing, and if it looks like an error, how to fix it.
 Keep it technical but easy to understand.
 
-This was made by an automated tool that uses AI: https://airpioa.github.io/minecraft-log-analyzer
+  put This was made by an automated tool that uses AI: https://airpioa.github.io/minecraft-log-analyzer at the end
 `;
 
 const MinecraftLogo = ({ size = 16, className = "" }: { size?: number, className?: string }) => (
-    <svg 
-        width={size} 
-        height={size} 
-        viewBox="0 0 24 24" 
-        fill="none" 
-        stroke="currentColor" 
-        strokeWidth="2" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
+    <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
         className={className}
     >
         <path d="M12 2l-8 4v12l8 4 8-4V6l-8-4z" />
@@ -79,20 +79,20 @@ const MinecraftLogo = ({ size = 16, className = "" }: { size?: number, className
 );
 
 const AnvilLogo = ({ size = 16, className = "" }: { size?: number, className?: string }) => (
-    <img 
+    <img
         src="https://raw.githubusercontent.com/MinecraftForge/MinecraftForge/master/src/main/resources/forge_logo.png"
-        width={size} 
-        height={size} 
+        width={size}
+        height={size}
         className={`${className} object-contain`}
         alt="Forge"
     />
 );
 
 const FabricLogo = ({ size = 16, className = "" }: { size?: number, className?: string }) => (
-    <img 
+    <img
         src="https://fabricmc.net/assets/logo.png"
-        width={size} 
-        height={size} 
+        width={size}
+        height={size}
         className={`${className} object-contain`}
         alt="Fabric"
     />
@@ -170,7 +170,7 @@ export default function Home() {
         }
         if (!baseUrl && provider === "web-llm") return;
         if (!apiKey && (provider === "gemini" || provider === "openai")) return;
-        
+
         setIsFetchingModels(true);
         try {
             if (provider === "browser-native") {
@@ -198,7 +198,7 @@ export default function Home() {
             if (provider === "openai" || (provider === "openai-compatible" && baseUrl)) {
                 const apiBaseUrl = (provider === "openai" ? "https://api.openai.com/v1" : baseUrl?.replace(/\/$/, "")) + "/models";
                 const finalUrl = useProxy ? `${proxyUrl}${encodeURIComponent(apiBaseUrl)}` : apiBaseUrl;
-                
+
                 const headers: any = { "Content-Type": "application/json" };
                 if (apiKey) headers["Authorization"] = `Bearer ${apiKey}`;
 
@@ -262,9 +262,9 @@ export default function Home() {
 
     const handleCorsError = () => {
         const id = Math.random().toString(36).substring(2, 9);
-        setNotifications(prev => [...prev, { 
-            id, 
-            message: "CORS/Network error detected. The browser blocked the request. Would you like to use a CORS Proxy?", 
+        setNotifications(prev => [...prev, {
+            id,
+            message: "CORS/Network error detected. The browser blocked the request. Would you like to use a CORS Proxy?",
             type: 'error'
         }]);
     };
@@ -294,7 +294,7 @@ export default function Home() {
                         setDownloadProgress({ text: report.text, progress: report.progress });
                     });
                 }
-                
+
                 // Initialize/reload model if needed
                 await webLlmEngine.current.reload(model || "Llama-3.1-8B-Instruct-q4f32_1-MLC");
                 setDownloadProgress(null);
@@ -424,10 +424,10 @@ export default function Home() {
 
     useEffect(() => {
         if (mounted) {
-             const timer = setTimeout(() => {
-                 fetchModels();
-             }, 1000);
-             return () => clearTimeout(timer);
+            const timer = setTimeout(() => {
+                fetchModels();
+            }, 1000);
+            return () => clearTimeout(timer);
         }
     }, [baseUrl, apiKey]);
 
@@ -495,10 +495,10 @@ export default function Home() {
         notify(`${taskType === 'scan' ? 'Compatibility' : 'Analysis'} prompt copied!`, "success");
         setTimeout(() => setIsPromptCopied(false), 2000);
 
-        setResults([{ 
-            title: taskType === 'scan' ? "Scan Instruction Generated" : "Analysis Instruction Generated", 
-            content: `The ${taskType === 'scan' ? 'compatibility scan' : 'analysis'} prompt has been copied. Use it in your AI chat with the provided logs.`, 
-            type: taskType 
+        setResults([{
+            title: taskType === 'scan' ? "Scan Instruction Generated" : "Analysis Instruction Generated",
+            content: `The ${taskType === 'scan' ? 'compatibility scan' : 'analysis'} prompt has been copied. Use it in your AI chat with the provided logs.`,
+            type: taskType
         }, ...results]);
     };
 
@@ -511,7 +511,7 @@ export default function Home() {
         const prompt = `${systemPrompt}\n\nLog Content:\n${pastedLog}`;
         await navigator.clipboard.writeText(prompt);
         notify(`${taskType === 'scan' ? 'Compatibility' : 'Analysis'} prompt copied!`, "success");
-        
+
         setResults([{ title: "Log Prompt Copied", content: `A ${taskType === 'scan' ? 'compatibility scan' : 'deep analysis'} prompt including your pasted log has been copied to your clipboard.`, type: taskType === 'scan' ? 'scan' : 'analysis' }, ...results]);
     };
 
@@ -628,9 +628,9 @@ export default function Home() {
                                                 How to Enable
                                             </p>
                                             <p className="text-[10px] text-slate-400 leading-relaxed">
-                                                1. Open <code className="text-indigo-300">chrome://flags</code><br/>
-                                                2. Enable <code className="text-indigo-300">Enables optimization guide on device</code><br/>
-                                                3. Enable <code className="text-indigo-300">Prompt API for Gemini Nano</code><br/>
+                                                1. Open <code className="text-indigo-300">chrome://flags</code><br />
+                                                2. Enable <code className="text-indigo-300">Enables optimization guide on device</code><br />
+                                                3. Enable <code className="text-indigo-300">Prompt API for Gemini Nano</code><br />
                                                 4. Relaunch Chrome.
                                             </p>
                                         </div>
@@ -643,8 +643,8 @@ export default function Home() {
                                                 <p className="text-[10px] font-black text-emerald-400">{Math.round(downloadProgress.progress * 100)}%</p>
                                             </div>
                                             <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
-                                                <motion.div 
-                                                    initial={{ width: 0 }} 
+                                                <motion.div
+                                                    initial={{ width: 0 }}
                                                     animate={{ width: `${downloadProgress.progress * 100}%` }}
                                                     className="h-full bg-emerald-500"
                                                 />
@@ -719,7 +719,7 @@ export default function Home() {
                                                             className="w-full bg-slate-900 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-mono"
                                                         />
                                                         {availableModels.length > 0 && (
-                                                            <button 
+                                                            <button
                                                                 onClick={() => setIsManualModel(false)}
                                                                 className="absolute right-4 top-1/2 -translate-y-1/2 p-1.5 bg-indigo-500/10 rounded-lg text-indigo-400 hover:bg-indigo-500/20 transition-all"
                                                                 title="Switch back to list"
@@ -740,11 +740,11 @@ export default function Home() {
                                                         {useProxy ? 'PROXY ON' : 'DIRECT'}
                                                     </div>
                                                 </div>
-                                                
-                                                <button 
+
+                                                <button
                                                     onClick={() => setUseProxy(!useProxy)}
-                                                    className={`w-full p-4 rounded-2xl border text-xs font-black transition-all flex items-center justify-center gap-3 ${useProxy 
-                                                        ? 'bg-emerald-600/10 border-emerald-500/20 text-emerald-400' 
+                                                    className={`w-full p-4 rounded-2xl border text-xs font-black transition-all flex items-center justify-center gap-3 ${useProxy
+                                                        ? 'bg-emerald-600/10 border-emerald-500/20 text-emerald-400'
                                                         : 'bg-white/5 border-white/10 text-slate-400 hover:bg-white/10'}`}
                                                 >
                                                     {useProxy ? <ShieldCheck size={16} /> : <Globe size={16} />}
@@ -875,7 +875,7 @@ export default function Home() {
                                                         className="w-full h-full bg-black/40 border border-white/5 rounded-[2rem] p-8 text-slate-200 outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all font-mono text-sm leading-relaxed resize-none scrollbar-hide"
                                                     />
                                                     <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900/90 p-2 rounded-2xl border border-white/10 shadow-2xl backdrop-blur-md">
-                                                        <button 
+                                                        <button
                                                             onClick={handleSelectionAI}
                                                             disabled={isRunning}
                                                             className="px-3 py-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-400 rounded-xl text-[10px] font-black flex items-center gap-2 transition-all border border-indigo-500/20 disabled:opacity-50"
@@ -892,8 +892,8 @@ export default function Home() {
                                                             { l: 'Src', p: 'mc', i: MinecraftLogo },
                                                             { l: 'Global', p: 'google', i: Search }
                                                         ].map(t => (
-                                                            <button 
-                                                                key={t.p} 
+                                                            <button
+                                                                key={t.p}
                                                                 onClick={() => handleSelectionSearch(t.p)}
                                                                 className="p-2 hover:bg-white/10 rounded-xl text-slate-400 hover:text-indigo-400 transition-all flex items-center gap-2"
                                                                 title={`Search ${t.l} for selection`}
@@ -910,7 +910,7 @@ export default function Home() {
                                                         <p className="text-[11px] text-slate-400">Fetch logs from URLs and append them here.</p>
                                                     </div>
                                                     <div className="flex gap-2">
-                                                        <button 
+                                                        <button
                                                             onClick={handleImportUrls}
                                                             disabled={isRunning}
                                                             className="px-4 py-3 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 rounded-xl text-[10px] font-black transition-all flex items-center gap-2"
@@ -918,7 +918,7 @@ export default function Home() {
                                                             {isRunning ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
                                                             FETCH
                                                         </button>
-                                                        <button 
+                                                        <button
                                                             onClick={() => setIsCloudModalOpen(true)}
                                                             className="px-4 py-3 bg-white/5 hover:bg-white/10 text-slate-400 rounded-xl text-[10px] font-black transition-all border border-white/5"
                                                         >
@@ -964,7 +964,7 @@ export default function Home() {
                                                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Scan Source</p>
                                                         <p className="text-[11px] text-slate-400">Log URLs used for compatibility scanning.</p>
                                                     </div>
-                                                    <button 
+                                                    <button
                                                         onClick={() => setIsCloudModalOpen(true)}
                                                         className="px-6 py-3 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 rounded-xl text-[10px] font-black transition-all border border-emerald-500/20"
                                                     >
@@ -1169,13 +1169,13 @@ export default function Home() {
                             />
 
                             <div className="flex gap-4">
-                                <button 
+                                <button
                                     onClick={() => setIsCloudModalOpen(false)}
                                     className="flex-1 py-4 bg-indigo-600 rounded-2xl text-[10px] font-black shadow-xl shadow-indigo-600/20 active:scale-95 transition-all"
                                 >
                                     SAVE & CLOSE
                                 </button>
-                                <button 
+                                <button
                                     onClick={() => setUrls("")}
                                     className="px-8 py-4 bg-white/5 rounded-2xl text-[10px] font-black hover:bg-white/10 transition-all border border-white/5"
                                 >
@@ -1205,7 +1205,7 @@ export default function Home() {
                             <div className="flex-1 flex flex-col gap-2">
                                 <p className="text-xs font-bold leading-relaxed">{n.message}</p>
                                 {n.action && (
-                                    <button 
+                                    <button
                                         onClick={() => {
                                             n.action?.fn();
                                             setNotifications(prev => prev.filter(nn => nn.id !== n.id));
