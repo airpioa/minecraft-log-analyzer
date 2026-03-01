@@ -1,9 +1,9 @@
 1:"$Sreact.fragment"
 2:I[47257,["/minecraft-log-analyzer/_next/static/chunks/2f236954d6a65e12.js"],"ClientPageRoot"]
-3:I[31713,["/minecraft-log-analyzer/_next/static/chunks/1ea3bb120e98e396.js"],"default"]
+3:I[31713,["/minecraft-log-analyzer/_next/static/chunks/51304a86f6bab328.js"],"default"]
 6:I[97367,["/minecraft-log-analyzer/_next/static/chunks/2f236954d6a65e12.js"],"OutletBoundary"]
 7:"$Sreact.suspense"
-0:{"buildId":"_EPCxr6gDnQinszQdPar1","rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","script","script-0",{"src":"/minecraft-log-analyzer/_next/static/chunks/1ea3bb120e98e396.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"loading":null,"isPartial":false}
+0:{"buildId":"3LtzDXhqy4gI7hR3JfCcU","rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","script","script-0",{"src":"/minecraft-log-analyzer/_next/static/chunks/51304a86f6bab328.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"loading":null,"isPartial":false}
 4:{}
 5:"$0:rsc:props:children:0:props:serverProvidedParams:params"
 8:null
