@@ -257,96 +257,112 @@ export default function Home() {
             type: 'error'
         }]);
     };
-const callAiClient = async (content: string, customPrompt?: string, taskType?: 'analysis' | 'scan') => {
-    const systemPrompt = customPrompt || (taskType === 'scan' ? SCANNER_PROMPT : SYSTEM_PROMPT);
-    const fullPrompt = `${systemPrompt}\n\nLog:\n${content}`;
 
-    try {
-        if (provider === "browser-native") {
-            // @ts-ignore
-            const aiApi = window.ai?.languageModel || window.ai?.assistant;
-            if (!aiApi) throw new Error("Browser AI API not found. Please use Chrome 127+ and enable Prompt API flags.");
+    const callAiClient = async (content: string, customPrompt?: string, taskType?: 'analysis' | 'scan') => {
+        const systemPrompt = customPrompt || (taskType === 'scan' ? SCANNER_PROMPT : SYSTEM_PROMPT);
+        const fullPrompt = `${systemPrompt}\n\nLog:\n${content}`;
 
-            const session = await aiApi.create({
-                systemPrompt: systemPrompt
-            });
+        try {
+            if (provider === "browser-native") {
+                // @ts-ignore
+                const aiApi = window.ai?.languageModel || window.ai?.assistant;
+                if (!aiApi) throw new Error("Browser AI API not found. Please use Chrome 127+ and enable Prompt API flags.");
 
-            const response = await session.prompt(content);
-            return response;
+                const session = await aiApi.create({
+                    systemPrompt: systemPrompt
+                });
+
+                const response = await session.prompt(content);
+                return response;
+            }
+
+            if (provider === "ollama") {
+                const targetUrl = (baseUrl?.replace(/\/$/, "") || "http://localhost:11434") + "/api/generate";
+                const finalUrl = useProxy ? `${proxyUrl}${encodeURIComponent(targetUrl)}` : targetUrl;
+
+                const resp = await fetch(finalUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        model: model || "llama3",
+                        system: systemPrompt,
+                        prompt: content,
+                        stream: false
+                    })
+                });
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || "Ollama error");
+                return data.response;
+            }
+
+            if (provider === "gemini") {
+                const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-1.5-pro'}:generateContent?key=${apiKey}`;
+                const finalUrl = useProxy ? `${proxyUrl}${encodeURIComponent(targetUrl)}` : targetUrl;
+
+                const resp = await fetch(finalUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: fullPrompt }] }]
+                    })
+                });
+                const data = await resp.json();
+                if (data.error) throw new Error(data.error.message || "Gemini API error");
+                return data.candidates?.[0]?.content?.parts?.[0]?.text;
+            }
+
+            if (provider === "openai" || provider === "openai-compatible") {
+                const defaultBaseUrl = "https://api.openai.com/v1";
+                const apiBaseUrl = (baseUrl?.replace(/\/$/, "") || defaultBaseUrl) + "/chat/completions";
+                const finalUrl = useProxy ? `${proxyUrl}${encodeURIComponent(apiBaseUrl)}` : apiBaseUrl;
+
+                const resp = await fetch(finalUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: model || "gpt-4o",
+                        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: content }]
+                    })
+                });
+                const data = await resp.json();
+                if (data.error) throw new Error(data.error.message || `${provider} API error. Check your key and Base URL.`);
+                return data.choices[0].message.content;
+            }
+
+            if (provider === "anthropic") {
+                const targetUrl = "https://api.anthropic.com/v1/messages";
+                const finalUrl = useProxy ? `${proxyUrl}${encodeURIComponent(targetUrl)}` : targetUrl;
+
+                const resp = await fetch(finalUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-api-key": apiKey,
+                        "anthropic-version": "2023-06-01"
+                    },
+                    body: JSON.stringify({
+                        model: model || "claude-3-5-sonnet-20240620",
+                        max_tokens: 4096,
+                        system: systemPrompt,
+                        messages: [{ role: "user", content: content }]
+                    })
+                });
+                const data = await resp.json();
+                if (data.error) throw new Error(data.error.message || "Anthropic API error");
+                return data.content[0].text;
+            }
+
+            throw new Error("Provider not supported client-side");
+        } catch (err: any) {
+            if (err instanceof TypeError) {
+                handleCorsError();
+                throw new Error("Request blocked by browser (CORS). Try enabling the CORS Proxy in settings.");
+            }
+            throw err;
         }
-
-        if (provider === "ollama") {
-
-            const targetUrl = baseUrl?.replace(/\/$/, "") || "http://localhost:11434";
-            const resp = await fetch(`${targetUrl}/api/generate`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    model: model || "llama3",
-                    system: systemPrompt,
-                    prompt: content,
-                    stream: false
-                })
-            });
-            const data = await resp.json();
-            if (!resp.ok) throw new Error(data.error || "Ollama error");
-            return data.response;
-        }
-
-        if (provider === "gemini") {
-            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model || 'gemini-1.5-pro'}:generateContent?key=${apiKey}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: fullPrompt }] }]
-                })
-            });
-            const data = await resp.json();
-            if (data.error) throw new Error(data.error.message || "Gemini API error");
-            return data.candidates?.[0]?.content?.parts?.[0]?.text;
-        }
-
-        if (provider === "openai" || provider === "openai-compatible") {
-            const defaultBaseUrl = "https://api.openai.com/v1";
-            const apiBaseUrl = baseUrl?.replace(/\/$/, "") || defaultBaseUrl;
-
-            const resp = await fetch(`${apiBaseUrl}/chat/completions`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({
-                    model: model || "gpt-4o",
-                    messages: [{ role: "system", content: systemPrompt }, { role: "user", content: content }]
-                })
-            });
-            const data = await resp.json();
-            if (data.error) throw new Error(data.error.message || `${provider} API error. Check your key and Base URL.`);
-            return data.choices[0].message.content;
-        }
-
-        if (provider === "anthropic") {
-            const resp = await fetch("https://api.anthropic.com/v1/messages", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "x-api-key": apiKey,
-                    "anthropic-version": "2023-06-01"
-                },
-                body: JSON.stringify({
-                    model: model || "claude-3-5-sonnet-20240620",
-                    max_tokens: 4096,
-                    system: systemPrompt,
-                    messages: [{ role: "user", content: content }]
-                })
-            });
-            const data = await resp.json();
-            if (data.error) throw new Error(data.error.message || "Anthropic API error");
-            return data.content[0].text;
-        }
-
-        throw new Error("Provider not supported client-side");
     };
 
     useEffect(() => {
