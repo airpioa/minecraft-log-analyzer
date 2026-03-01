@@ -28,7 +28,9 @@ import {
 import { getRawUrl, fetchLog } from "@/lib/logs";
 import { openSearchUrl, uploadToMclogs, exportToFile, SCANNER_PROMPT } from "@/lib/utilities";
 
-type Provider = "gemini" | "openai" | "anthropic" | "ollama" | "openai-compatible" | "browser-native";
+import { CreateMLCEngine, MLCEngine } from "@mlc-ai/web-llm";
+
+type Provider = "gemini" | "openai" | "anthropic" | "web-llm" | "openai-compatible" | "browser-native";
 type Mode = "url" | "manual" | "hub";
 type Notification = { 
     id: string, 
@@ -95,6 +97,15 @@ const FabricLogo = ({ size = 16, className = "" }: { size?: number, className?: 
     />
 );
 
+const WEB_LLM_MODELS = [
+    { id: "Llama-3.1-8B-Instruct-q4f32_1-MLC", label: "Llama 3.1 8B (Recommended)" },
+    { id: "Llama-3.1-8B-Instruct-q4f16_1-MLC", label: "Llama 3.1 8B (Fast)" },
+    { id: "Mistral-7B-Instruct-v0.3-q4f16_1-MLC", label: "Mistral 7B" },
+    { id: "Phi-3-mini-4k-instruct-q4f16_1-MLC", label: "Phi-3 Mini (Small/Fast)" },
+    { id: "Qwen2-7B-Instruct-q4f16_1-MLC", label: "Qwen2 7B" },
+    { id: "gemma-2b-it-q4f16_1-MLC", label: "Gemma 2B" }
+];
+
 export default function Home() {
     const [mounted, setMounted] = useState(false);
     const [activeMode, setActiveMode] = useState<Mode>("url");
@@ -118,6 +129,8 @@ export default function Home() {
     const [isCloudModalOpen, setIsCloudModalOpen] = useState(false);
     const [useProxy, setUseProxy] = useState(false);
     const [proxyUrl, setProxyUrl] = useState("https://corsproxy.io/?");
+    const [downloadProgress, setDownloadProgress] = useState<{ text: string, progress: number } | null>(null);
+    const webLlmEngine = useRef<MLCEngine | null>(null);
 
     const resultsEndRef = useRef<HTMLDivElement>(null);
     const pastedLogRef = useRef<HTMLTextAreaElement>(null);
@@ -147,7 +160,14 @@ export default function Home() {
     }, [activeMode, mounted]);
 
     const fetchModels = async () => {
-        if (!baseUrl && provider === "ollama") return;
+        if (!baseUrl && provider === "web-llm") {
+            setAvailableModels(WEB_LLM_MODELS.map(m => m.id));
+            if (!model || !WEB_LLM_MODELS.find(m => m.id === model)) {
+                setModel(WEB_LLM_MODELS[0].id);
+            }
+            return;
+        }
+        if (!baseUrl && provider === "web-llm") return;
         if (!apiKey && (provider === "gemini" || provider === "openai")) return;
         
         setIsFetchingModels(true);
@@ -166,19 +186,9 @@ export default function Home() {
                 return;
             }
 
-            // Direct client-side fetch for Ollama
-            if (provider === "ollama") {
-                const targetUrl = (baseUrl?.replace(/\/$/, "") || "http://localhost:11434") + "/api/tags";
-                const finalUrl = useProxy ? `${proxyUrl}${encodeURIComponent(targetUrl)}` : targetUrl;
-                
-                const resp = await fetch(finalUrl);
-                const data = await resp.json();
-                const models = data.models?.map((m: any) => m.name) || [];
-                setAvailableModels(models);
-                if (models.length > 0 && (!model || !models.includes(model))) {
-                    setModel(models[0]);
-                }
-                notify(`Found ${models.length} local models`, "success");
+            // WebLLM handles models locally
+            if (provider === "web-llm") {
+                setAvailableModels(WEB_LLM_MODELS.map(m => m.id));
                 setIsFetchingModels(false);
                 return;
             }
@@ -276,23 +286,29 @@ export default function Home() {
                 return response;
             }
 
-            if (provider === "ollama") {
-                const targetUrl = (baseUrl?.replace(/\/$/, "") || "http://localhost:11434") + "/api/generate";
-                const finalUrl = useProxy ? `${proxyUrl}${encodeURIComponent(targetUrl)}` : targetUrl;
+            if (provider === "web-llm") {
+                if (!webLlmEngine.current) {
+                    webLlmEngine.current = new MLCEngine();
+                    webLlmEngine.current.setInitProgressCallback((report) => {
+                        setDownloadProgress({ text: report.text, progress: report.progress });
+                    });
+                }
+                
+                // Initialize/reload model if needed
+                await webLlmEngine.current.reload(model || "Llama-3.1-8B-Instruct-q4f32_1-MLC");
+                setDownloadProgress(null);
 
-                const resp = await fetch(finalUrl, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        model: model || "llama3",
-                        system: systemPrompt,
-                        prompt: content,
-                        stream: false
-                    })
+                const messages = [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: content },
+                ];
+
+                const reply = await webLlmEngine.current.chat.completions.create({
+                    // @ts-ignore
+                    messages,
                 });
-                const data = await resp.json();
-                if (!resp.ok) throw new Error(data.error || "Ollama error");
-                return data.response;
+
+                return reply.choices[0].message.content;
             }
 
             if (provider === "gemini") {
@@ -371,7 +387,7 @@ export default function Home() {
         setApiKey(savedKey || "");
 
         const savedUrl = localStorage.getItem(`${provider}_base_url`);
-        const defaultUrl = provider === "ollama" ? "http://localhost:11434" : "";
+        const defaultUrl = "";
         const currentBaseUrl = savedUrl || defaultUrl;
         setBaseUrl(currentBaseUrl);
 
@@ -379,7 +395,7 @@ export default function Home() {
         const defaultModel = provider === "gemini" ? "gemini-1.5-pro" :
             provider === "openai" ? "gpt-4o" :
                 provider === "anthropic" ? "claude-3-5-sonnet-20240620" :
-                    provider === "ollama" ? "llama3" : "";
+                    provider === "web-llm" ? "Llama-3.1-8B-Instruct-q4f32_1-MLC" : "";
         setModel(savedModel || defaultModel);
 
         localStorage.setItem("mc_provider", provider);
@@ -593,7 +609,7 @@ export default function Home() {
                                             <option value="gemini">Google Gemini</option>
                                             <option value="openai">OpenAI (Official)</option>
                                             <option value="anthropic">Anthropic Claude</option>
-                                            <option value="ollama">Ollama (Local)</option>
+                                            <option value="web-llm">Web Models (Local GPU)</option>
                                             <option value="openai-compatible">OpenAI Compatible</option>
                                             <option value="browser-native">Chrome (Built-in AI)</option>
                                         </select>
@@ -614,8 +630,25 @@ export default function Home() {
                                         </div>
                                     )}
 
+                                    {provider === 'web-llm' && downloadProgress && (
+                                        <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Downloading Model...</p>
+                                                <p className="text-[10px] font-black text-emerald-400">{Math.round(downloadProgress.progress * 100)}%</p>
+                                            </div>
+                                            <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
+                                                <motion.div 
+                                                    initial={{ width: 0 }} 
+                                                    animate={{ width: `${downloadProgress.progress * 100}%` }}
+                                                    className="h-full bg-emerald-500"
+                                                />
+                                            </div>
+                                            <p className="text-[9px] text-slate-500 truncate">{downloadProgress.text}</p>
+                                        </div>
+                                    )}
+
                                     <div className="flex flex-col gap-4">
-                                        {provider !== "ollama" && (
+                                        {provider !== "web-llm" && provider !== "browser-native" && (
                                             <div className="flex flex-col gap-3">
                                                 <label className="text-xs font-black text-slate-500 uppercase tracking-widest">API Secret Key</label>
                                                 <input
@@ -626,12 +659,12 @@ export default function Home() {
                                             </div>
                                         )}
 
-                                        {(provider === "ollama" || provider === "openai-compatible") && (
+                                        {provider === "openai-compatible" && (
                                             <div className="flex flex-col gap-3">
                                                 <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Base API URL</label>
                                                 <input
                                                     type="text" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)}
-                                                    placeholder={provider === "ollama" ? "http://localhost:11434" : "https://api.groq.com/openai/v1"}
+                                                    placeholder="https://api.groq.com/openai/v1"
                                                     className="bg-slate-900 border border-white/10 rounded-2xl p-4 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-mono"
                                                 />
                                             </div>
@@ -663,7 +696,11 @@ export default function Home() {
                                                             }}
                                                             className="w-full bg-slate-900 border border-white/10 rounded-2xl p-4 pr-10 text-sm outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-mono appearance-none cursor-pointer"
                                                         >
-                                                            {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
+                                                            {availableModels.map(m => (
+                                                                <option key={m} value={m}>
+                                                                    {provider === 'web-llm' ? (WEB_LLM_MODELS.find(wm => m === wm.id)?.label || m) : m}
+                                                                </option>
+                                                            ))}
                                                             <option value="manual" className="text-indigo-400 font-bold italic">+ Manual Entry...</option>
                                                         </select>
                                                         <ChevronDown className="absolute right-4 pointer-events-none text-slate-500" size={16} />
