@@ -77,7 +77,7 @@ const MinecraftLogo = ({ size = 16, className = "" }: { size?: number, className
 
 const AnvilLogo = ({ size = 16, className = "" }: { size?: number, className?: string }) => (
     <img 
-        src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKIAAACUCAMAAAAnDwKZAAAAk1BMVEX////b0LQ4NCq8spzGvKWakn6uppTYzbI1MSfJv6cyLiOAem0wLCPT0tGnpqPn5+YtKBytrKm4t7YcFQA9OjBbWFNTUEmUjHoiHArRx6yhn5yIgG+gmIQnIhqXlZNOST1jYFtuaFlWUURFQTl3cWSzqpNlX1Hw8O8fGg/Dw8MQBAAmIRTd3dylopkYFApIRUFqamn03RJoAAAEwklEQVR4nO2ccVuqMBSHr4gJiIIJooChKFDhrfv9P93tiZ2zPbnQcsqs8/4pYm8Htt8Ggz9/COI8qqd7YN+1yydU8+dZw/O0a5dPqNaO0eDfd+3yCaSoAlJUASmqoFrXbkOtmeIeGI9KYIqfVV3rveGtg21DaA6XDcMIPgt0qKcX+tY7Tmb3gGTVfGb5OkShF7JGYomKPjQcbRWjlfaKCSl+jVtVjPRvLskj5IxmiuYQSMtNQ/l3P2Z4OigWNsO0UTayggaru3qKiiawFHpIljP1RAtFW6bIGg4pkiIp3oJiFfosSbbYL9qCIuTM4tqKFWTG+Gm0AdI7wFwCQs6Mr5sz3pyFhpFjkti5xQ6qFfUB3NobuGwX/zr19OYOm7HkOHiwc5hHOwlXxEM+eDTe9zAW8ZUUWcUsmaIlVYSGQ4qkSIo9odPRQ9F33nEzQXHFksRPTIniC9v6cklFIVN2LDXKHYbdMsGcSVKg35ozY+WK3rbprw0n78OQwR72DsHpgCOrZ7oy2ObXSyiy+Mj7ZpsiTvVdqeIjpNAFFa1jijDVl1cRFC9ZxWOKOErUVzEhxV+i2GFzYQNZ92gV4XL8dRQrZB9mjLKPUym8wiS4Rlv4YlIw7swefE1UxN8+S/E+XDN2QqYgNpdFxSXWmMtGJlQez1TDWCNnKU7rZsTg+Pmyd8DQbj3kGIX+CA85nqlv5yrweJ4i/KL7LUXYWaqIrNQoOj9c0SHFmznQGjeX2oJMUdLpiP3iWYo8UyZZlr+TbaSKkpzhgTMIWM+9TQp22axI4EZHEJylOIVMCVMuISlTT5YznD7kX5FkmJ47xDpHcbKAfj+Siclc8ZCL4IwahxZOOQLOVKxhZ1WK0EgsUiRFUuxAkfURyjodmaL/9SFt5THeMiVnmZIKFpJ5iqCItCvmvOsOgfnJitM57MIzZSmTkDrynOkfwgcPwRbyb44lOf12UTyDwg9kDlgbqSKnXRH51iQ1XsDpS4qkSIo/QREyRb1i7XzEP12RZ0oMU40glfzl9nnKUKZYIEm4/kj472TFyStkinBPR1ad9nnKUKKY4P8cV4ecnikPkCl1gssbpFMpoZ6HAwap4shXs2bsARsJVzRVKbKfJkWdFH39FW+gijeg+BsPtDmC2JspUnRHmC4FFkLaieN6giWfQHHZCB/OiRUtZuOKuwGQnlpPrsjZrSCuVC2VVq/owslNiqRIit0p+qoUWaaoe8juoWbLXBVWUfFzgB5GwANcsst5ztzxPy2Z93HFYqM8U2TEMzbVWG0k9SzaFTMXMuWSj3nGrQ3niCIusbzow8ekSIqk+BVFdgf/G4qZA3fwL6k48eHJwpP7xT6vosF2di6p2J4zKc8ZnKf0MVN2T1d+6AZvsPmyevJQxEzx59d+6hRvU7rHFGHZJSmSIinqrHhqp9OZ4hQXdnHFgaDI7qZ0qYg5s48xZ8oBxAy/9FWy86EDRQ4uDnS2EZQzCmCeYmmhiOsuBMWt8RFSJEVS/EzR0l9RqypO4M2PLwbvulHRWsDWbXeKe3x/5nTHEmVTBli7KWx90uK1Z/Bgk4VnohPqIMbxDhuJE3Z3eGWQogpIUQWkqALPeJl94PlVL0XhRc33WmUKcYv8B5NrJtnQX1BIAAAAAElFTkSuQmCC"
+        src="https://raw.githubusercontent.com/MinecraftForge/MinecraftForge/master/src/main/resources/forge_logo.png"
         width={size} 
         height={size} 
         className={`${className} object-contain`}
@@ -87,7 +87,7 @@ const AnvilLogo = ({ size = 16, className = "" }: { size?: number, className?: s
 
 const FabricLogo = ({ size = 16, className = "" }: { size?: number, className?: string }) => (
     <img 
-        src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDE2Ij48cGF0aCBmaWxsPSIjMzgzNDJhIiBkPSJNOSAxaDF2MWgxdjFoMXYxaDF2MWgxdjFoMXYyaC0xdjFoLTJ2MWgtMXYxaC0xdjFIOXYyaC04djFIOXYtMUg1di0xSDR2LTFIM3YtMUgyVjlIM3YtMUg0di0xSDV2LTFINnYtMUg3di0xSDh2LTFIOXYtMXoiLz48cGF0aCBmaWxsPSIjZGJkMGI0IiBkPSJNNCA5VjhIMXY3SDFWNmgxbDEtMVY0aDFsLjUxNS0uNDg3TDkgM1YyaDF2MWgxdjFoMXYxaDF2MWgxdjFsLTEuMzYuNjM3TDEwIDEwbC0xLjQ1LjU1TDggMTJsLTEuNjI1LjcwNC0yLjgzMi0zLjA1M1oiLz48cGF0aCBmaWxsPSIjYmNiMjljIiBkPSJNOSAzSDF2MWgxdjFoMXYxaDF2MWgxdjFoLTFMOSA0ek0xMiA3bC0uNTA5LS40NEwxMSA3bC0xIDF2MmgxVjloMXpNMTAgMTBIOUwtLjQ0My0uNTk1TDggMTB2Mmgxdi0xaDF6TTggMTJIM0wtLjQ3Ny41NDZMNyAxM2gxek05IDNoMXYxaDF2MWgxdjFoMXYxaDF2MWgtMUw5IDR6Ii8+PC9zdmc+"
+        src="https://fabricmc.net/assets/logo.png"
         width={size} 
         height={size} 
         className={`${className} object-contain`}
