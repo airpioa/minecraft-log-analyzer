@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Minecraft Log Analyzer will be documented in this file.
+All notable changes to **minecraft-log-analyzer/** will be documented in this file.
 
 ## [0.2.0] - 2026-03-01
 
