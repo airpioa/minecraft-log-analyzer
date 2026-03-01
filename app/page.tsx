@@ -29,6 +29,7 @@ import { getRawUrl, fetchLog } from "@/lib/logs";
 import { openSearchUrl, uploadToMclogs, exportToFile, SCANNER_PROMPT } from "@/lib/utilities";
 
 import { CreateMLCEngine, MLCEngine } from "@mlc-ai/web-llm";
+import Cookies from "js-cookie";
 
 type Provider = "gemini" | "openai" | "anthropic" | "web-llm" | "openai-compatible" | "browser-native";
 type Mode = "url" | "manual" | "hub";
@@ -383,7 +384,7 @@ export default function Home() {
 
     useEffect(() => {
         if (!mounted) return;
-        const savedKey = localStorage.getItem(`${provider}_api_key`);
+        const savedKey = Cookies.get(`${provider}_api_key`);
         setApiKey(savedKey || "");
 
         const savedUrl = localStorage.getItem(`${provider}_base_url`);
@@ -407,6 +408,12 @@ export default function Home() {
             fetchModels();
         }, 100);
     }, [provider, mounted]);
+
+    useEffect(() => {
+        if (mounted && apiKey) {
+            Cookies.set(`${provider}_api_key`, apiKey, { expires: 30, secure: true, sameSite: 'strict' });
+        }
+    }, [apiKey, provider, mounted]);
 
     useEffect(() => {
         if (mounted && provider === 'browser-native') {
@@ -463,7 +470,6 @@ export default function Home() {
                 const analysis = await callAiClient(log.content, undefined, taskType);
                 setResults(prev => [{ title: log.title, content: analysis, type: taskType }, ...prev]);
 
-                localStorage.setItem(`${provider}_api_key`, apiKey);
                 localStorage.setItem(`${provider}_base_url`, baseUrl);
                 localStorage.setItem(`${provider}_model`, model);
             }
