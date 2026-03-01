@@ -8,3 +8,5 @@ config.json
 
 # Logs saved to disk
 log_*.txt
+node_modules
+.next
