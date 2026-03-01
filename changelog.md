@@ -2,7 +2,7 @@
 
 All notable changes to the Minecraft Log Analyzer will be documented in this file.
 
-## [Unreleased] - 2026-03-01
+## [Released] - 2026-03-01
 
 ### Added
 
