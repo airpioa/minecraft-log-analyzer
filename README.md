@@ -1,78 +1,52 @@
-# Minecraft Log Analyzer
+# Analyzer.Pro (Minecraft Log Analyzer)
 
-A desktop GUI tool that fetches Minecraft crash logs from **mclo.gs** and **gnomebot.dev**, then uses the **Gemini AI API** to analyze them and explain exactly what's wrong and how to fix it.
+A modern, high-performance web application designed to diagnose Minecraft crash logs using AI. Built with Next.js and Tailwind CSS, it offers a seamless experience for both automated API-driven analysis and manual AI prompting.
 
-## Installation
+**Live Demo**: [https://airpioa.github.io/minecraft-log-analyzer/](https://airpioa.github.io/minecraft-log-analyzer/)
 
-```bash
-pip install -r requirements.txt
-python3 gui.py
-```
+## Key Features
 
-> **Note**: On some systems you may need to set up a virtual environment first:
->
-> ```bash
-> python3 -m venv venv && source venv/bin/activate
-> pip install -r requirements.txt
-> python3 gui.py
-> ```
+### 🧠 Direct Browser AI
+- **Static Portability**: All AI logic has been moved to the client side. The app runs entirely in your browser, making it compatible with static hosting like GitHub Pages.
+- **Local Ollama Support**: Communicate directly with a local Ollama instance (`localhost:11434`) without needing an SSH tunnel or server proxy.
+- **Multi-Provider**: Native support for **Google Gemini**, **OpenAI**, **Anthropic Claude**, and any **OpenAI-Compatible** API (like Groq or Together).
 
-## How to Use the GUI
+### 🛠️ Workspaces
+- **Cloud Logs**: Enter `mclo.gs` or other raw log URLs for rapid automated analysis.
+- **Manual Prompting**: Consolidate raw text and cloud URLs into powerful prompts for external AI windows.
+- **Compatibility Hub**: A dedicated space for scanning mod conflicts, missing libraries, and version mismatches.
 
-### 1. Enter Log URLs
+### 🔍 Precision Tools
+- **Selection Search**: Highlight any part of a log to instantly look it up on Forge/Neo, Fabric, Minecraft Source, or Google.
+- **AI Selection Explain**: Highlight a cryptic error or stack trace and click the brain icon for an instant AI-powered technical explanation.
+- **Auto-Fetching Models**: Automatically populates model dropdowns for all providers once your API key or Base URL is entered.
 
-At the top of the window, paste one or more log URLs — one per line:
+## Development
 
-```
-https://mclo.gs/XXXXXXX
-https://gnomebot.dev/paste/mclogs/YYYYYYY
-```
+This is a Next.js project using Turbopack.
 
----
-
-### 2. Manual Mode (Default)
-
-Use this if you don't have a Gemini API key, or want to use [Gemini on the web](https://gemini.google.com).
-
-1. Click **"Fetch Log & Generate Prompt"**
-2. The logs are saved to your disk — their file paths appear in the **"Saved Log Paths"** box
-3. Click **"Copy Prompt to Clipboard"**
-4. Go to [gemini.google.com](https://gemini.google.com), **upload the saved log files**, then paste the prompt
-
----
-
-### 3. API Mode
-
-Use this if you have a [Gemini API key](https://aistudio.google.com).
-
-1. Enter your API key in the **"Gemini API Key"** field
-2. Choose a model from the **AI Model** dropdown (Gemini 3.1 Pro Preview is recommended)
-3. Click **"Analyze Logs with AI"**
-4. Results appear in the output box below
-
-Your API key, preferred model, and save directory are all automatically saved in `config.json` for next time.
-
----
-
-### 4. Settings
-
-- **Default Save Directory**: Choose where downloaded log files are saved
-- **Automatically save fetched logs to disk**: Toggle log saving on/off
-
-## Getting a Free API Key
-
-1. Go to [aistudio.google.com](https://aistudio.google.com)
-2. Sign in with your Google account
-3. Click **"Get API key"**
-4. Paste it into the API Mode tab
-
-## CLI Usage
-
-You can also run the analyzer from the command line:
+### Getting Started
 
 ```bash
-export GEMINI_API_KEY="your_key_here"
-python3 analyze_logs.py https://mclo.gs/XXXXXXX --save
+npm install
+npm run dev
 ```
 
-Use `--save` to download the log file to disk alongside the analysis.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+### Static Export
+
+To build the project for static hosting:
+
+```bash
+npm run build
+```
+
+The output will be in the `out/` directory.
+
+## Deployment
+
+The application is automatically deployed to GitHub Pages via GitHub Actions whenever changes are pushed to the `master` branch.
+
+---
+*This was made by an automated tool that uses AI: https://airpioa.github.io/minecraft-log-analyzer*
